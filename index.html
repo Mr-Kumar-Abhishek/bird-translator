@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bioacoustic Bird Analyzer</title>
+    
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="manifest" id="manifest-placeholder">
+
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-color: #1E1E1E;
+            --text-color: #E0E0E0;
+            --accent-color: #00E676; 
+            --alert-color: #FF5252;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--panel-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        /* Install Banner */
+        #installBanner {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            background: var(--accent-color);
+            color: black;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin: 0 0 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Visualizer */
+        .visualizer-box {
+            background: black;
+            border: 1px solid #444;
+            height: 180px;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        canvas { width: 100%; height: 100%; display: block; }
+
+        .overlay {
+            position: absolute;
+            top: 5px; left: 10px;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* Data Readout */
+        .readout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .metric {
+            background: #252525;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        
+        .metric span { display: block; color: #888; font-size: 0.7rem; }
+        .metric div { font-size: 1.1rem; color: var(--accent-color); font-weight: bold; }
+
+        /* Translation Area */
+        .translation-area {
+            background: #2A3B2A;
+            padding: 15px;
+            border-left: 5px solid var(--accent-color);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            min-height: 50px;
+        }
+        
+        #transText { font-size: 1.2rem; font-weight: bold; }
+
+        /* Controls */
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .btn-mic { background: var(--accent-color); color: black; }
+        .btn-mic.active { background: var(--alert-color); color: white; animation: pulse 1.5s infinite; }
+        .btn-sim { background: #333; color: white; border: 1px solid #555; }
+
+        @keyframes pulse { 0% {opacity: 1;} 50% {opacity: 0.7;} 100% {opacity: 1;} }
+
+        .status-bar {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="installBanner">⬇️ Install App for Offline Use</div>
+
+    <div class="container">
+        <h1>
+            <span>BirdSense AI</span>
+            <span style="font-size:0.8rem; color:#666;">v2.0 PWA</span>
+        </h1>
+
+        <div class="visualizer-box">
+            <canvas id="osc"></canvas>
+            <div class="overlay">LIVE SPECTROGRAM</div>
+        </div>
+
+        <div class="readout">
+            <div class="metric">
+                <span>FREQUENCY</span>
+                <div id="freqVal">0 Hz</div>
+            </div>
+            <div class="metric">
+                <span>INTENSITY</span>
+                <div id="ampVal">0 dB</div>
+            </div>
+        </div>
+
+        <div class="translation-area">
+            <div style="font-size:0.7rem; color:#aaa; margin-bottom:5px;">INTERPRETED INTENT</div>
+            <div id="transText">...</div>
+        </div>
+
+        <div class="controls">
+            <button id="micBtn" class="btn-mic" onclick="toggleMic()">Start Mic</button>
+            <button class="btn-sim" onclick="simulate()">Simulate</button>
+        </div>
+
+        <div class="status-bar" id="pwaStatus">Mode: Online</div>
+    </div>
+
+<script>
+    // --- 1. PWA CONFIGURATION & MANIFEST GENERATION ---
+    // We generate the manifest dynamically to keep this a single HTML file.
+    const iconSVG = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#121212"/><path d="M100 256c0-50 40-90 90-90s90 40 90 90-40 90-90 90-90-40-90-90z" fill="#00E676"/><path d="M250 200l100-50v100l-100-50z" fill="#00E676"/></svg>`);
+    
+    const manifest = {
+        name: "Bioacoustic Bird Analyzer",
+        short_name: "BirdSense",
+        start_url: "./index.html",
+        display: "standalone",
+        background_color: "#121212",
+        theme_color: "#00E676",
+        icons: [{
+            src: `data:image/svg+xml,${iconSVG}`,
+            sizes: "512x512",
+            type: "image/svg+xml"
+        }]
+    };
+
+    const stringManifest = JSON.stringify(manifest);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
+
+    // --- 2. SERVICE WORKER REGISTRATION ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => {
+                    console.log('SW Registered');
+                    document.getElementById('pwaStatus').innerText = "Mode: Offline Ready (PWA Active)";
+                })
+                .catch(err => console.log('SW Fail:', err));
+        });
+    }
+
+    // --- 3. INSTALL PROMPT LOGIC ---
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const banner = document.getElementById('installBanner');
+        banner.style.display = 'block';
+        
+        banner.addEventListener('click', () => {
+            banner.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                deferredPrompt = null;
+            });
+        });
+    });
+
+    // --- 4. APP LOGIC (Bioacoustics) ---
+    let audioCtx, analyser, microphone, dataArray, animationId;
+    let isListening = false;
+    const canvas = document.getElementById("osc");
+    const ctx = canvas.getContext("2d");
+    
+    function resize() {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    async function toggleMic() {
+        const btn = document.getElementById('micBtn');
+        if (!isListening) {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 2048;
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                microphone = audioCtx.createMediaStreamSource(stream);
+                microphone.connect(analyser);
+                
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                isListening = true;
+                btn.innerText = "Stop Listening";
+                btn.classList.add('active');
+                analyze();
+            } catch (e) {
+                alert("Microphone blocked. Use 'Simulate' button.");
+            }
+        } else {
+            if(audioCtx) audioCtx.close();
+            isListening = false;
+            cancelAnimationFrame(animationId);
+            btn.innerText = "Start Mic";
+            btn.classList.remove('active');
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+        }
+    }
+
+    function analyze() {
+        if(!isListening) return;
+        animationId = requestAnimationFrame(analyze);
+        analyser.getByteFrequencyData(dataArray);
+        
+        // Draw
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        const barW = (canvas.width / dataArray.length) * 2.5;
+        let x = 0;
+        
+        // Physics Calc
+        let maxVal = 0, maxIndex = 0, sum = 0;
+
+        for(let i=0; i<dataArray.length; i++) {
+            let v = dataArray[i];
+            sum += v;
+            if(v > maxVal) { maxVal = v; maxIndex = i; }
+            
+            ctx.fillStyle = `hsl(${v}, 100%, 50%)`;
+            ctx.fillRect(x, canvas.height - v/2, barW, v/2);
+            x += barW + 1;
+        }
+
+        let avg = sum / dataArray.length;
+        let freq = Math.round(maxIndex * (audioCtx.sampleRate / 2) / dataArray.length);
+
+        if(avg > 10) updateUI(freq, avg);
+    }
+
+    function updateUI(freq, amp) {
+        document.getElementById('freqVal').innerText = freq + " Hz";
+        document.getElementById('ampVal').innerText = Math.round(amp) + " dB";
+        
+        let text = "...";
+        if(freq > 2500) text = "⚠️ HIGH PITCH: Alarm / Contact Call";
+        else if(freq > 1000) text = "🎵 MID RANGE: Song / Territory";
+        else text = "🛑 LOW PITCH: Threat / Aggression";
+        
+        document.getElementById('transText').innerText = text;
+    }
+
+    function simulate() {
+        // Mock UI update for testing without Mic
+        let simFreq = Math.floor(Math.random() * 3000) + 500;
+        updateUI(simFreq, 80);
+        ctx.fillStyle = "#00E676";
+        ctx.fillRect(50, 50, 100, 100); // Draw dummy box
+        setTimeout(() => ctx.clearRect(0,0,canvas.width,canvas.height), 500);
+    }
+
+</script>
+</body>
+</html>
+
