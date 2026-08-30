@@ -20,6 +20,8 @@ COCOMO categorizes software projects into **three types (or modes)** based on pr
   *Unit: Months (M)*
 - **Average Staff Size ($P$)** = $E / T_{dev}$ 
   *Unit: Persons (Headcount)*
+- **Cost** = $E \times \text{Average Salary per Person-Month}$
+  *Unit: Currency (e.g., USD)*
 - **Productivity** = $KLOC / E$ 
   *Unit: KLOC / Person-Month*
 
@@ -35,7 +37,9 @@ COCOMO categorizes software projects into **three types (or modes)** based on pr
 
 ## 2. Example Calculation
 
-Let's calculate the Effort, Development Time, and Average Staff Size for a software project estimated to be **50 KLOC (50,000 lines of code)** across all three project types.
+Let's calculate the Effort, Development Time, Average Staff Size, and Cost for a software project estimated to be **50 KLOC (50,000 lines of code)** across all three project types.
+
+*(Assuming an average developer salary of **$8,000 USD** per Person-Month)*
 
 ### A. Organic Type
 Using the constants: $a = 2.4$, $b = 1.05$, $c = 2.5$, $d = 0.38$
@@ -53,6 +57,9 @@ Using the constants: $a = 2.4$, $b = 1.05$, $c = 2.5$, $d = 0.38$
 * **Average Staff Size ($P$)**:
   $P = E / T_{dev} = 145.02 / 16.61$
   $P \approx 8.73 \text{ Persons} \approx \mathbf{9 \text{ Persons}}$
+
+* **Estimated Cost**:
+  $\text{Cost} = 145.02 \text{ PM} \times \$8,000/\text{PM} = \mathbf{\$1,160,160 \text{ USD}}$
 
 ---
 
@@ -73,6 +80,9 @@ Using the constants: $a = 3.0$, $b = 1.12$, $c = 2.5$, $d = 0.35$
   $P = E / T_{dev} = 244.02 / 16.86$
   $P \approx 14.47 \text{ Persons} \approx \mathbf{15 \text{ Persons}}$
 
+* **Estimated Cost**:
+  $\text{Cost} = 244.02 \text{ PM} \times \$8,000/\text{PM} = \mathbf{\$1,952,160 \text{ USD}}$
+
 ---
 
 ### C. Embedded Type
@@ -92,6 +102,9 @@ Using the constants: $a = 3.6$, $b = 1.20$, $c = 2.5$, $d = 0.32$
   $P = E / T_{dev} = 393.61 / 17.36$
   $P \approx 22.67 \text{ Persons} \approx \mathbf{23 \text{ Persons}}$
 
+* **Estimated Cost**:
+  $\text{Cost} = 393.61 \text{ PM} \times \$8,000/\text{PM} = \mathbf{\$3,148,880 \text{ USD}}$
+
 ---
 
 ## 3. Summary of the 50 KLOC Example
@@ -101,5 +114,6 @@ Using the constants: $a = 3.6$, $b = 1.20$, $c = 2.5$, $d = 0.32$
 | **Effort** (Person-Months) | 145.02 | 244.02 | 393.61 |
 | **Time** (Months) | 16.61 | 16.86 | 17.36 |
 | **Staff Size** (Persons) | ~9 | ~15 | ~23 |
+| **Estimated Cost** (USD) | $1,160,160 | $1,952,160 | $3,148,880 |
 
-As demonstrated, while the estimated development time remains somewhat consistent across the three types, the **effort** and **required staff size** increase dramatically as the project type moves from Organic (simple) to Embedded (highly complex).
+As demonstrated, while the estimated development time remains somewhat consistent across the three types, the **effort**, **required staff size**, and **cost** increase dramatically as the project type moves from Organic (simple) to Embedded (highly complex).
