@@ -55,6 +55,16 @@ cd bird-translator
 - Web App Manifest for PWA installation
 - Responsive viewport meta tags
 
+## COCOMO Cost Estimation
+
+A Constructive Cost Model (COCOMO) estimation has been performed for this project. Assuming a 50 KLOC project size and an average salary of $8,000 USD per Person-Month, the estimated costs across the three project types are:
+
+- **Organic (Simple)**: 145.02 Person-Months (~9 Persons) | **Cost**: $1,160,160 USD
+- **Semi-detached (Medium)**: 244.02 Person-Months (~15 Persons) | **Cost**: $1,952,160 USD
+- **Embedded (Complex)**: 393.61 Person-Months (~23 Persons) | **Cost**: $3,148,880 USD
+
+For the detailed breakdown and formulas, see the [cocomo_calculations.md](cocomo_calculations.md) file.
+
 ## License
 
 All Rights Reserved. © 2026
